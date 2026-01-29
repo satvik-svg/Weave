@@ -1,0 +1,482 @@
+WEAVE — Project Summary and Technical Implementation Plan
+
+WEAVE is a solo-built, community-driven, agentic AI platform designed to convert social intent into coordinated, verifiable real-world action. The system focuses on helping communities identify local problems, generate structured action plans, mobilize participants, coordinate execution, and verify real-world impact using autonomous AI agents with observability and human-in-the-loop safeguards.
+
+The goal is to move beyond simple volunteer listings or recommendation systems and instead deliver a technically robust, event-driven coordination platform where AI agents actively reason, plan, assign, monitor, and validate community initiatives.
+
+1. Core Problem WEAVE Solves
+
+Most community and social-impact platforms stop at discovery and listing. They do not:
+
+Convert issues into executable plans
+
+Coordinate people dynamically
+
+Handle drop-offs or execution failures
+
+Verify outcomes objectively
+
+Provide agent-level transparency
+
+WEAVE addresses this gap by introducing a structured, agent-based execution pipeline that transforms community input into measurable outcomes.
+
+2. System Architecture Overview
+
+WEAVE is designed using a layered, event-driven architecture:
+
+Frontend layer for community interaction
+
+Backend API layer for data persistence and orchestration
+
+Agent layer for reasoning and coordination
+
+Background worker layer for asynchronous agent execution
+
+Data and observability layer for tracking, evaluation, and verification
+
+The system is asynchronous by design. User-facing APIs remain fast, while AI agent reasoning and planning run in background workers triggered by events.
+
+3. Functional Workflow (End-to-End Pipeline)
+Step 1 — Community Issue Intake
+
+Users submit local issues through the web interface. Each submission includes:
+
+Title and description
+
+Location coordinates
+
+Optional images
+
+User identifier
+
+The backend validates and stores the issue with a “new” status and emits an internal event to trigger agent processing.
+
+Step 2 — Issue Discovery Agent
+
+The Discovery Agent is triggered by the issue creation event. Its responsibilities include:
+
+Normalizing unstructured text
+
+Classifying issue type (environmental, civic, social, etc.)
+
+Estimating urgency and scope
+
+Filtering low-quality or spam submissions
+
+Producing structured metadata with confidence scores
+
+Outputs are stored and logged for observability. Only validated issues proceed to planning.
+
+Step 3 — Action Planning Agent
+
+The Planning Agent converts a validated issue into a structured execution plan. It performs:
+
+Task decomposition
+
+Dependency mapping
+
+Resource estimation
+
+Timeline generation
+
+Role requirements
+
+The result is a machine-readable plan with tasks, required participants, and estimated duration. This plan is persisted and becomes the basis for coordination.
+
+Step 4 — Volunteer Matching Agent
+
+The Matching Agent assigns participants to tasks using:
+
+Location proximity
+
+Availability
+
+Skill tags
+
+Participation history
+
+Reliability score
+
+The matching process combines deterministic filters and LLM reasoning. Assignments are logged with decision explanations.
+
+Step 5 — Coordination Agent
+
+The Coordination Agent manages execution. It functions as an automated project manager by:
+
+Generating schedules
+
+Sending reminders
+
+Monitoring participation
+
+Detecting drop-offs
+
+Reassigning tasks dynamically
+
+Escalating blockers
+
+Task states are continuously updated in the database.
+
+Step 6 — Impact Verification Agent
+
+The Verification Agent validates real-world outcomes using:
+
+GPS check-ins
+
+Before/after media
+
+Participant reports
+
+Peer confirmations
+
+It evaluates evidence, flags anomalies, and assigns a verification confidence score. Only verified actions count toward impact metrics.
+
+Step 7 — Observability and Evaluation
+
+Every agent execution produces structured logs including:
+
+Inputs
+
+Outputs
+
+Confidence scores
+
+Execution time
+
+Retry counts
+
+Decision traces
+
+Metrics tracked include:
+
+Tasks completed
+
+Verification rate
+
+Volunteer retention
+
+Time-to-action
+
+Agent success and failure rates
+
+This supports auditability and judge-facing evaluation criteria.
+
+4. Technology Stack
+Frontend
+
+Next.js (React-based framework)
+
+Tailwind CSS for UI styling
+
+React Query for server state management
+
+Map integration (Mapbox or Leaflet)
+
+Cloud-based media upload service
+
+Backend
+
+FastAPI for API services
+
+JWT or managed authentication provider
+
+Structured REST endpoints
+
+Event emission after state changes
+
+Agent Layer
+
+LLM model via OpenAI API
+
+LangGraph or CrewAI for agent workflow orchestration
+
+Structured prompts with JSON outputs
+
+Confidence scoring and schema validation
+
+Background Execution
+
+Agents run in background workers, not inside API requests.
+
+Celery for background task execution
+
+Redis as message broker and event queue
+
+Separate worker service continuously listening for tasks
+
+Agents are event-triggered and stateless per execution. They do not run continuously; they execute when events are queued.
+
+Data Layer
+
+PostgreSQL for primary data storage
+
+Tables for issues, plans, tasks, users, assignments, verification, and agent logs
+
+Object storage for evidence media
+
+5. Deployment Architecture
+
+The system is deployed using a split-service model:
+
+Frontend and API deployed on a serverless platform
+
+Redis provided by a managed serverless Redis provider
+
+Background worker deployed on a platform that supports always-on processes
+
+Database hosted on a managed Postgres provider
+
+Operational flow:
+
+API receives request and stores data
+
+API pushes task to Redis queue
+
+Worker consumes task and runs agent logic
+
+Worker writes results to database
+
+Worker emits next event
+
+This design avoids blocking requests and supports retries and failure isolation.
+
+6. Reliability and Safety Controls
+
+Agent outputs validated against schemas
+
+Low-confidence outputs flagged for human review
+
+Human-in-the-loop override endpoints
+
+Idempotent task processing
+
+Retry policies for agent failures
+
+Event versioning to prevent duplicate runs
+
+7. MVP Build Phases
+Phase 1 — Core Loop
+
+Issue intake
+
+Discovery agent
+
+Planning agent
+
+Plan visualization
+
+Phase 2 — Coordination
+
+Volunteer profiles
+
+Matching agent
+
+Task assignment
+
+Scheduling logic
+
+Phase 3 — Verification and Metrics
+
+Evidence upload
+
+Verification agent
+
+Impact dashboard
+
+Agent logs and metrics
+
+8. Positioning
+
+WEAVE is not a chatbot and not a static volunteer directory. It is a structured, agentic coordination system that uses LLM-powered agents to plan, mobilize, coordinate, and verify community-driven action with measurable impact and full decision transparency
+
+---
+
+## IMPLEMENTATION PLAN (MVP)
+
+### PHASE 1: Backend Foundation (Week 1)
+**Goal**: Set up FastAPI backend with database connection and basic CRUD
+
+**Tasks**:
+- [ ] 1.1: Create backend folder structure
+- [ ] 1.2: Set up FastAPI with basic endpoints (health check, CORS)
+- [ ] 1.3: Configure Supabase connection with environment variables
+- [ ] 1.4: Create database models (Issues, Volunteers, ActionPlans, Tasks)
+- [ ] 1.5: Implement CRUD endpoints for Issues
+- [ ] 1.6: Test backend locally with Postman/Thunder Client
+
+**Deliverables**: Working FastAPI server that can create/read issues from Supabase
+
+---
+
+### PHASE 2: Discovery Agent (Week 2)
+**Goal**: Build first AI agent that analyzes and categorizes issues
+
+**Tasks**:
+- [ ] 2.1: Set up OpenAI API integration
+- [ ] 2.2: Create discovery_agent.py with prompt template
+- [ ] 2.3: Implement JSON schema validation for agent output
+- [ ] 2.4: Add agent logging to database (agent_logs table)
+- [ ] 2.5: Create background task trigger for discovery agent
+- [ ] 2.6: Test agent with 5 sample issues
+
+**Deliverables**: Discovery agent that categorizes issues and returns structured data
+
+**Agent Output Example**:
+```json
+{
+  "category": "environment",
+  "priority": 0.75,
+  "urgency": "medium",
+  "confidence": 0.92,
+  "reasoning": "Community park cleanup with clear scope"
+}
+```
+
+---
+
+### PHASE 3: Planning Agent (Week 3)
+**Goal**: Convert validated issues into actionable task plans
+
+**Tasks**:
+- [ ] 3.1: Create planning_agent.py with prompt template
+- [ ] 3.2: Design prompt to generate tasks with dependencies
+- [ ] 3.3: Implement task creation in database
+- [ ] 3.4: Link planning agent to discovery agent output
+- [ ] 3.5: Add error handling and retry logic
+- [ ] 3.6: Test with 5 different issue types
+
+**Deliverables**: Planning agent that creates 3-5 tasks per issue with requirements
+
+**Agent Output Example**:
+```json
+{
+  "action_plan": {
+    "title": "Central Park Graffiti Cleanup",
+    "tasks": [
+      {
+        "name": "Gather cleaning supplies",
+        "required_people": 2,
+        "estimated_hours": 1,
+        "skills_required": ["organization"]
+      },
+      {
+        "name": "Clean graffiti from walls",
+        "required_people": 4,
+        "estimated_hours": 3,
+        "skills_required": ["cleanup", "physical_labor"]
+      }
+    ],
+    "confidence": 0.88
+  }
+}
+```
+
+---
+
+### PHASE 4: Seed Data & Matching Agent (Week 4)
+**Goal**: Create mock volunteers and implement matching logic
+
+**Tasks**:
+- [ ] 4.1: Create seed script with 20 mock volunteers
+- [ ] 4.2: Add realistic volunteer data (varied locations, skills, availability)
+- [ ] 4.3: Create matching_agent.py
+- [ ] 4.4: Implement distance calculation (lat/lng)
+- [ ] 4.5: Build prompt for volunteer matching with reasoning
+- [ ] 4.6: Display matched volunteers with explanations
+
+**Deliverables**: Matching agent that assigns volunteers to tasks with AI reasoning
+
+**Seed Data Locations**: Use coordinates around a demo city (e.g., NYC, SF, Austin)
+
+---
+
+### PHASE 5: Frontend Integration (Week 5)
+**Goal**: Connect Next.js frontend to backend API
+
+**Tasks**:
+- [ ] 5.1: Update API client (lib/api.ts) with backend URL
+- [ ] 5.2: Implement issue submission flow
+- [ ] 5.3: Create real-time status polling for agent processing
+- [ ] 5.4: Build action plan display page with tasks
+- [ ] 5.5: Add volunteer match cards with AI reasoning
+- [ ] 5.6: Display agent logs and confidence scores
+
+**Deliverables**: Complete frontend showing issue → agents → plan → volunteers flow
+
+---
+
+### PHASE 6: Deployment & Polish (Week 6)
+**Goal**: Deploy to production and prepare demo
+
+**Tasks**:
+- [ ] 6.1: Deploy backend to Railway with environment variables
+- [ ] 6.2: Deploy frontend to Vercel
+- [ ] 6.3: Test end-to-end in production
+- [ ] 6.4: Create 5 pre-completed flows for demo
+- [ ] 6.5: Add error handling and loading states
+- [ ] 6.6: Record backup demo video
+
+**Deliverables**: Live deployed application ready for demo
+
+---
+
+### OPTIONAL ENHANCEMENTS (If Time Permits)
+- [ ] Simple verification: Upload "after" photo with AI description
+- [ ] Email notifications (using Resend or similar)
+- [ ] Admin dashboard showing agent metrics
+- [ ] Mobile-responsive improvements
+- [ ] Dark mode
+
+---
+
+## TECH STACK FINALIZED
+
+**Frontend**:
+- Next.js 15 (App Router) - Already set up ✓
+- Tailwind CSS - Already configured ✓
+- React Query - Already added ✓
+- Supabase Client - Already configured ✓
+
+**Backend** (To be created):
+- FastAPI (Python 3.11+)
+- Supabase Client (Python)
+- OpenAI SDK
+- Pydantic for validation
+- Python-dotenv for environment variables
+
+**Deployment**:
+- Frontend: Vercel
+- Backend: Railway
+- Database: Supabase (already set up)
+- File Storage: Supabase Storage
+
+**Required API Keys/Services**:
+- OpenAI API key (need to obtain)
+- Supabase URL and Anon Key (already have)
+- Railway account (free tier)
+
+---
+
+## SUCCESS CRITERIA FOR DEMO
+
+**Must Have**:
+✓ User can submit an issue with photo and location
+✓ Discovery agent analyzes and categorizes it (visible in UI)
+✓ Planning agent generates 3-5 tasks automatically
+✓ Matching agent recommends 3-5 volunteers with reasoning
+✓ Agent logs and confidence scores displayed
+✓ Complete flow takes 30-60 seconds
+
+**Nice to Have**:
+- 5 pre-completed examples in database
+- Admin view showing all agent executions
+- Error handling with retry mechanism visible
+- Mobile responsive design
+
+**Demo Script**:
+1. Show 2-3 pre-completed plans (proof it works)
+2. Live submit new issue during presentation
+3. Watch agents process in real-time
+4. Show generated plan with volunteer matches
+5. Highlight agent reasoning and confidence scores
+
