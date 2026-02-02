@@ -63,16 +63,42 @@ async def get_action_plan(plan_id: str):
 @router.get("/{plan_id}/tasks")
 async def get_plan_tasks(plan_id: str):
     """
-    Get all tasks for an action plan
+    Get all tasks for an action plan WITH assigned volunteers
     """
     try:
         db = get_db()
         
-        result = db.table("tasks").select("*").eq("action_plan_id", plan_id).order("priority").execute()
+        # Get tasks first
+        tasks_result = db.table("tasks").select("*").eq("action_plan_id", plan_id).order("priority").execute()
+        
+        tasks_with_volunteers = []
+        for task in tasks_result.data:
+            task_data = {**task}
+            
+            # Manually fetch assignments for this task with volunteer details
+            assignments_result = db.table("task_assignments").select(
+                "id, volunteer_id, status, assigned_at, started_at, completed_at, notes, volunteers(id, name, email, reliability_score)"
+            ).eq("task_id", task['id']).execute()
+            
+            # Transform assignments
+            task_data['assigned_volunteers'] = [
+                {
+                    'assignment_id': a['id'],
+                    'status': a['status'],
+                    'assigned_at': a.get('assigned_at'),
+                    'started_at': a.get('started_at'),
+                    'completed_at': a.get('completed_at'),
+                    'notes': a.get('notes'),
+                    'volunteer': a.get('volunteers')
+                }
+                for a in assignments_result.data if a.get('volunteers')
+            ]
+            task_data['assigned_count'] = len(task_data['assigned_volunteers'])
+            tasks_with_volunteers.append(task_data)
         
         return {
-            "tasks": result.data,
-            "count": len(result.data)
+            "tasks": tasks_with_volunteers,
+            "count": len(tasks_with_volunteers)
         }
         
     except Exception as e:

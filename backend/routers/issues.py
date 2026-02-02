@@ -24,8 +24,18 @@ async def process_issue_with_agents(issue_id: str):
             print(f"📋 Starting Planning Agent for issue {issue_id}")
             planning_result = await create_action_plan(issue_id)
             print(f"✅ Planning Agent completed: {planning_result.get('success', False)}")
-        
-        # Phase 4: Matching Agent (coming soon)
+            
+            # Phase 4: Matching Agent (if planning succeeded)
+            if planning_result.get('success'):
+                from agents.matching_agent import match_volunteers_to_tasks
+                action_plan_id = planning_result.get('action_plan', {}).get('id')
+                if action_plan_id:
+                    print(f"👥 Starting Matching Agent for action plan {action_plan_id}")
+                    matching_result = await match_volunteers_to_tasks(action_plan_id)
+                    print(f"✅ Matching Agent completed: {matching_result.get('success', False)}")
+                    if matching_result.get('success'):
+                        summary = matching_result.get('summary', {})
+                        print(f"   📊 Assigned {summary.get('total_assignments_made', 0)} volunteers to {summary.get('tasks_fully_assigned', 0)}/{summary.get('total_tasks', 0)} tasks")
         
     except Exception as e:
         print(f"❌ Agent processing failed: {e}")
@@ -70,7 +80,7 @@ async def create_issue(issue: IssueCreate, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("", response_model=list[IssueResponse])
+@router.get("")
 async def get_issues(status: str = None, limit: int = 50):
     """
     Get all issues, optionally filtered by status
@@ -87,7 +97,10 @@ async def get_issues(status: str = None, limit: int = 50):
         
         result = query.execute()
         
-        return result.data
+        return {
+            "issues": result.data,
+            "count": len(result.data)
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -107,6 +120,36 @@ async def get_issue(issue_id: str):
             raise HTTPException(status_code=404, detail="Issue not found")
         
         return result.data[0]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{issue_id}/process", response_model=dict)
+async def trigger_agent_processing(issue_id: str, background_tasks: BackgroundTasks):
+    """
+    Manually trigger AI agent processing for an existing issue
+    Useful for reprocessing or when agents failed
+    """
+    try:
+        db = get_db()
+        
+        # Check if issue exists
+        result = db.table("issues").select("*").eq("id", issue_id).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Issue not found")
+        
+        # Trigger agent processing in background
+        background_tasks.add_task(process_issue_with_agents, issue_id)
+        
+        return {
+            "success": True,
+            "message": "AI agents processing started",
+            "issue_id": issue_id
+        }
         
     except HTTPException:
         raise
