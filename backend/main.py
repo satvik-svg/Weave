@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
-from routers import issues, agent_logs, action_plans
+from routers import issues, agent_logs, action_plans, volunteers, volunteers
 
 settings = get_settings()
 
@@ -25,6 +25,8 @@ app.add_middleware(
 app.include_router(issues.router)
 app.include_router(agent_logs.router)
 app.include_router(action_plans.router)
+app.include_router(volunteers.router)
+app.include_router(volunteers.router)
 
 
 @app.get("/")
