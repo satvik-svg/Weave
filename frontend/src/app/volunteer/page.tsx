@@ -1,272 +1,295 @@
 'use client'
 
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import Navbar from '@/components/Navbar'
-import { MapPin, Clock, Users, Star, Calendar } from 'lucide-react'
+import { MapPin, Star, Award, AlertCircle, Search, Users, Zap, Calendar, CheckCircle } from 'lucide-react'
+import { volunteersApi, Volunteer } from '@/lib/api'
 
-// Mock data for volunteer opportunities
-const volunteerOpportunities = [
-  {
-    id: '1',
-    title: 'Park Cleanup Crew Leader',
-    issue_title: 'Riverside Park Cleanup Drive',
-    description: 'Lead a team of 5-8 volunteers in organizing cleanup activities',
-    skills_needed: ['Leadership', 'Organization'],
-    time_commitment: '4 hours',
-    date: '2024-01-28',
-    location: 'Riverside Park, Downtown',
-    urgency: 'high',
-    volunteers_needed: 2,
-    volunteers_assigned: 1,
-  },
-  {
-    id: '2',
-    title: 'Safety Patrol Coordinator',
-    issue_title: 'Neighborhood Watch Program',
-    description: 'Help coordinate patrol schedules and community communication',
-    skills_needed: ['Communication', 'Organization', 'Safety Knowledge'],
-    time_commitment: '3 hours/week',
-    date: '2024-01-25',
-    location: 'Oak Street District',
-    urgency: 'high',
-    volunteers_needed: 3,
-    volunteers_assigned: 1,
-  },
-  {
-    id: '3',
-    title: 'Food Distribution Helper',
-    issue_title: 'Food Distribution Network',
-    description: 'Assist with sorting, packing, and distributing food packages',
-    skills_needed: ['Physical work', 'Customer service'],
-    time_commitment: '2 hours',
-    date: '2024-01-26',
-    location: 'Community Center, 5th Ave',
-    urgency: 'medium',
-    volunteers_needed: 6,
-    volunteers_assigned: 4,
-  },
-  {
-    id: '4',
-    title: 'Community Liaison',
-    issue_title: 'Pothole Repair Initiative',
-    description: 'Interface with city officials and track repair progress',
-    skills_needed: ['Communication', 'Documentation'],
-    time_commitment: '2-3 hours',
-    date: '2024-01-30',
-    location: 'Main Street area',
-    urgency: 'low',
-    volunteers_needed: 1,
-    volunteers_assigned: 0,
-  },
-]
+const skillColors: Record<string, string> = {
+  'gardening': 'bg-green-100 text-green-700 border-green-200',
+  'manual labor': 'bg-amber-100 text-amber-700 border-amber-200',
+  'construction': 'bg-orange-100 text-orange-700 border-orange-200',
+  'coordination': 'bg-purple-100 text-purple-700 border-purple-200',
+  'event planning': 'bg-pink-100 text-pink-700 border-pink-200',
+  'social media': 'bg-blue-100 text-blue-700 border-blue-200',
+  'photography': 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  'communication': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  'first aid': 'bg-red-100 text-red-700 border-red-200',
+  'driving': 'bg-slate-100 text-slate-700 border-slate-200',
+  'cooking': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  'teaching': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+}
 
-const urgencyColors = {
-  high: 'bg-red-100 text-red-800 border-red-200',
-  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  low: 'bg-green-100 text-green-800 border-green-200',
+const getSkillColor = (skill: string) => {
+  const lowercaseSkill = skill.toLowerCase()
+  for (const [key, value] of Object.entries(skillColors)) {
+    if (lowercaseSkill.includes(key)) return value
+  }
+  return 'bg-gray-100 text-gray-700 border-gray-200'
 }
 
 export default function VolunteerPage() {
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
-  const [timeAvailable, setTimeAvailable] = useState('all')
-  
-  const allSkills = ['Leadership', 'Organization', 'Communication', 'Safety Knowledge', 'Physical work', 'Customer service', 'Documentation']
-  
-  const handleSkillToggle = (skill: string) => {
-    setSelectedSkills(prev => 
-      prev.includes(skill) 
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
-    )
-  }
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedSkill, setSelectedSkill] = useState('all')
 
-  const filteredOpportunities = volunteerOpportunities.filter(opp => {
-    const matchesSkills = selectedSkills.length === 0 || 
-      selectedSkills.some(skill => opp.skills_needed.includes(skill))
-    
-    const matchesTime = timeAvailable === 'all' || 
-      (timeAvailable === 'short' && parseInt(opp.time_commitment) <= 3) ||
-      (timeAvailable === 'medium' && parseInt(opp.time_commitment) > 3 && parseInt(opp.time_commitment) <= 6) ||
-      (timeAvailable === 'long' && parseInt(opp.time_commitment) > 6)
-    
-    return matchesSkills && matchesTime
+  const { data: volunteers = [], isLoading, error } = useQuery({
+    queryKey: ['volunteers'],
+    queryFn: () => volunteersApi.getAll(100),
   })
+
+  // Get all unique skills
+  const allSkills = [...new Set(volunteers.flatMap((v: Volunteer) => v.skills || []))]
+
+  const filteredVolunteers = volunteers.filter((volunteer: Volunteer) => {
+    const matchesSearch = volunteer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (volunteer.skills || []).some((skill: string) => skill.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchesSkill = selectedSkill === 'all' || (volunteer.skills || []).includes(selectedSkill)
+    return matchesSearch && matchesSkill
+  })
+
+  const stats = {
+    total: volunteers.length,
+    available: volunteers.filter((v: Volunteer) => (v.availability || []).length > 0).length,
+    avgReliability: volunteers.length > 0 
+      ? Math.round(volunteers.reduce((sum: number, v: Volunteer) => sum + (v.reliability_score || 0), 0) / volunteers.length * 100) 
+      : 0,
+    totalSkills: allSkills.length,
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto pt-8 pb-16 px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white p-8 mb-8">
-          <h1 className="text-3xl font-bold mb-4">Join the Movement</h1>
-          <p className="text-xl text-blue-100 mb-6">
-            Make a real impact in your community. Our AI matches you to volunteer opportunities 
-            based on your skills, availability, and location.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
-              <div className="text-2xl font-bold">156</div>
-              <div className="text-blue-100">Active Volunteers</div>
+              <h1 className="text-4xl font-bold mb-2">Community Volunteers</h1>
+              <p className="text-white/80 text-lg">Meet our amazing volunteers matched by AI to community needs</p>
             </div>
-            <div>
-              <div className="text-2xl font-bold">43</div>
-              <div className="text-blue-100">Issues Resolved</div>
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl px-5 py-3">
+              <Zap className="text-yellow-300" size={24} />
+              <div>
+                <div className="text-sm text-white/70">AI-Powered Matching</div>
+                <div className="font-semibold">Skills • Location • Reliability</div>
+              </div>
             </div>
-            <div>
-              <div className="text-2xl font-bold">2,847</div>
-              <div className="text-blue-100">Hours Contributed</div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <Users className="text-white/70" size={24} />
+                <div>
+                  <div className="text-3xl font-bold">{stats.total}</div>
+                  <div className="text-white/70 text-sm">Total Volunteers</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="text-green-300" size={24} />
+                <div>
+                  <div className="text-3xl font-bold">{stats.available}</div>
+                  <div className="text-white/70 text-sm">Available Now</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <Star className="text-yellow-300" size={24} />
+                <div>
+                  <div className="text-3xl font-bold">{stats.avgReliability}%</div>
+                  <div className="text-white/70 text-sm">Avg Reliability</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <Award className="text-purple-300" size={24} />
+                <div>
+                  <div className="text-3xl font-bold">{stats.totalSkills}</div>
+                  <div className="text-white/70 text-sm">Unique Skills</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 -mt-6 relative z-10">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search volunteers by name or skill..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                />
+              </div>
+            </div>
+            
+            {/* Skill Filter */}
+            <div className="md:w-64">
+              <select
+                value={selectedSkill}
+                onChange={(e) => setSelectedSkill(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all appearance-none bg-white"
+              >
+                <option value="all">All Skills</option>
+                {allSkills.sort().map((skill: string) => (
+                  <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter Opportunities</h2>
-              
-              {/* Skills Filter */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Skills</h3>
-                <div className="space-y-2">
-                  {allSkills.map(skill => (
-                    <label key={skill} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedSkills.includes(skill)}
-                        onChange={() => handleSkillToggle(skill)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">{skill}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Time Commitment Filter */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Time Available</h3>
-                <select
-                  value={timeAvailable}
-                  onChange={(e) => setTimeAvailable(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All timeframes</option>
-                  <option value="short">1-3 hours</option>
-                  <option value="medium">4-6 hours</option>
-                  <option value="long">6+ hours</option>
-                </select>
-              </div>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-16">
+            <div className="relative w-16 h-16 mx-auto mb-4">
+              <div className="absolute inset-0 rounded-full border-4 border-purple-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-purple-600 border-t-transparent animate-spin"></div>
+            </div>
+            <p className="text-gray-600">Loading volunteers...</p>
+          </div>
+        )}
 
-              {/* Profile Section */}
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Your Volunteer Profile</h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center justify-between">
-                    <span>Tasks Completed</span>
-                    <span className="font-medium">12</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Hours Contributed</span>
-                    <span className="font-medium">48</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Reliability Score</span>
-                    <div className="flex items-center">
-                      <Star size={14} className="text-yellow-400 mr-1" />
-                      <span className="font-medium">4.8</span>
-                    </div>
-                  </div>
-                </div>
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="text-red-600" size={24} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-red-800 mb-1">Connection Error</h3>
+                <p className="text-red-700">Failed to load volunteers. Make sure the backend server is running on http://localhost:8000</p>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Opportunities List */}
-          <div className="lg:col-span-3">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Available Opportunities ({filteredOpportunities.length})
-              </h2>
+        {!isLoading && !error && (
+          <>
+            {/* Results Count */}
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-gray-600">
+                Showing <span className="font-semibold text-gray-900">{filteredVolunteers.length}</span> volunteers
+              </p>
             </div>
 
-            <div className="space-y-6">
-              {filteredOpportunities.map(opportunity => (
-                <div key={opportunity.id} className="bg-white rounded-lg shadow-sm p-6">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-xs px-2 py-1 rounded-full border ${urgencyColors[opportunity.urgency as keyof typeof urgencyColors]}`}>
-                          {opportunity.urgency} priority
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {opportunity.volunteers_assigned}/{opportunity.volunteers_needed} volunteers assigned
-                        </span>
+            {/* Volunteers Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredVolunteers.map((volunteer: Volunteer) => (
+                <div
+                  key={volunteer.id}
+                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-purple-200 transition-all duration-300"
+                >
+                  {/* Header with Avatar */}
+                  <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-6 pb-12 relative">
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
+                      <div className="w-20 h-20 rounded-full bg-white p-1 shadow-lg">
+                        <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+                          {volunteer.name.split(' ').map(n => n[0]).join('')}
+                        </div>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900">{opportunity.title}</h3>
-                      <p className="text-sm text-blue-600">{opportunity.issue_title}</p>
                     </div>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                      Apply
-                    </button>
                   </div>
 
-                  {/* Description */}
-                  <p className="text-gray-700 mb-4">{opportunity.description}</p>
+                  {/* Content */}
+                  <div className="pt-12 pb-6 px-6">
+                    <div className="text-center mb-4">
+                      <h3 className="text-xl font-semibold text-gray-900">{volunteer.name}</h3>
+                      <p className="text-gray-500 text-sm">{volunteer.email}</p>
+                    </div>
 
-                  {/* Skills Needed */}
-                  <div className="mb-4">
-                    <span className="text-sm font-medium text-gray-700 mr-2">Skills needed:</span>
-                    <div className="inline-flex flex-wrap gap-1">
-                      {opportunity.skills_needed.map(skill => (
+                    {/* Location */}
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-4">
+                      <MapPin size={14} className="text-gray-400" />
+                      <span>{volunteer.location?.address || 'Location not specified'}</span>
+                    </div>
+
+                    {/* Reliability Score */}
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={16}
+                            className={star <= Math.round((volunteer.reliability_score || 0) * 5) 
+                              ? 'text-yellow-400 fill-yellow-400' 
+                              : 'text-gray-200'}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">
+                        {((volunteer.reliability_score || 0) * 100).toFixed(0)}% reliable
+                      </span>
+                    </div>
+
+                    {/* Skills */}
+                    <div className="flex flex-wrap gap-2 justify-center mb-4">
+                      {(volunteer.skills || []).slice(0, 4).map((skill: string, idx: number) => (
                         <span
-                          key={skill}
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            selectedSkills.includes(skill)
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}
+                          key={idx}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border ${getSkillColor(skill)}`}
                         >
                           {skill}
                         </span>
                       ))}
+                      {(volunteer.skills || []).length > 4 && (
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                          +{(volunteer.skills || []).length - 4} more
+                        </span>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Meta Information */}
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <Clock size={14} className="mr-1" />
-                      <span>{opportunity.time_commitment}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar size={14} className="mr-1" />
-                      <span>{new Date(opportunity.date).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin size={14} className="mr-1" />
-                      <span>{opportunity.location}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Users size={14} className="mr-1" />
-                      <span>{opportunity.volunteers_needed - opportunity.volunteers_assigned} spots left</span>
+                    {/* Availability */}
+                    <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-100">
+                      <Calendar size={14} className="text-gray-400" />
+                      <span className={`text-sm ${(volunteer.availability || []).length > 0 ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                        {(volunteer.availability || []).length > 0 
+                          ? `${(volunteer.availability || []).length} time slots available` 
+                          : 'No availability set'}
+                      </span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {filteredOpportunities.length === 0 && (
-              <div className="text-center py-12">
-                <Users size={48} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No opportunities found</h3>
-                <p className="text-gray-600">Try adjusting your filters to see more opportunities.</p>
+            {/* Empty State */}
+            {filteredVolunteers.length === 0 && (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="text-gray-400" size={32} />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No volunteers found</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your search or filter criteria.</p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('')
+                    setSelectedSkill('all')
+                  }}
+                  className="text-purple-600 font-medium hover:text-purple-700"
+                >
+                  Clear all filters
+                </button>
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   )
