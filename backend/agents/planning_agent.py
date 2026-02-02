@@ -326,6 +326,9 @@ async def create_action_plan(issue_id: str) -> dict:
         tasks_data = plan_data.get("tasks", [])
         created_tasks = []
         
+        # Get issue location to assign to all tasks
+        issue_location = issue.get("location")
+        
         for task_info in tasks_data:
             task = {
                 "id": str(uuid.uuid4()),
@@ -338,6 +341,7 @@ async def create_action_plan(issue_id: str) -> dict:
                 "priority": task_info.get("priority", 1),
                 "prerequisites": task_info.get("prerequisites", []),
                 "skills_required": task_info.get("skills_required", []),
+                "location": issue_location,  # Inherit location from issue
                 "created_at": datetime.utcnow().isoformat()
             }
             
