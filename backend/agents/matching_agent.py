@@ -143,9 +143,18 @@ async def match_volunteers_to_tasks(action_plan_id: str) -> dict:
         
         # Get volunteers who are already assigned to active (non-completed) tasks
         active_assignments = db.table("task_assignments").select("volunteer_id").in_("status", ["assigned", "in_progress"]).execute()
-        busy_volunteer_ids = set(a['volunteer_id'] for a in active_assignments.data)
         
-        # Filter to only available volunteers (not currently assigned or only have completed tasks)
+        # Count assignments per volunteer
+        assignment_counts = {}
+        for a in active_assignments.data:
+            v_id = a['volunteer_id']
+            assignment_counts[v_id] = assignment_counts.get(v_id, 0) + 1
+            
+        # Filter strictly busy volunteers (more than 3 active tasks)
+        MAX_CONCURRENT_TASKS = 3
+        busy_volunteer_ids = set(v_id for v_id, count in assignment_counts.items() if count >= MAX_CONCURRENT_TASKS)
+        
+        # Filter to available volunteers (less than MAX_CONCURRENT_TASKS assignments)
         available_volunteers = [v for v in all_volunteers if v['id'] not in busy_volunteer_ids]
         
         print(f"📊 Volunteers: {len(all_volunteers)} total, {len(busy_volunteer_ids)} busy, {len(available_volunteers)} available")

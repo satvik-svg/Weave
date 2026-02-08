@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
-from routers import issues, agent_logs, action_plans, volunteers, volunteers
+from routers import issues, agent_logs, action_plans, volunteers
 
 settings = get_settings()
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -25,7 +26,6 @@ app.add_middleware(
 app.include_router(issues.router)
 app.include_router(agent_logs.router)
 app.include_router(action_plans.router)
-app.include_router(volunteers.router)
 app.include_router(volunteers.router)
 
 
@@ -49,6 +49,31 @@ async def health_check():
         "agents": "ready"
     }
 
+
+@app.on_event("startup")
+async def startup_event():
+    """Validate configuration on startup"""
+    if "your_supabase_url_here" in settings.supabase_url:
+        print("\n\033[91mCRITICAL WARNING: Supabase Configuration Missing!\033[0m")
+        print("Please update backend/.env with your actual SUPABASE_URL and SUPABASE_ANON_KEY.")
+        print("The backend will not function correctly without these values.\n")
+    
+    if "your_gemini_api_key_here" in settings.gemini_api_key:
+        print("\n\033[93mWARNING: Gemini API Key Missing!\033[0m")
+        print("AI features will not work. Update backend/.env with your GEMINI_API_KEY.\n")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Global exception handler to log errors"""
+    import traceback
+    error_msg = traceback.format_exc()
+    print(f"\n\033[91mINTERNAL SERVER ERROR: {str(exc)}\033[0m")
+    print(error_msg)
+    return {
+        "detail": "Internal Server Error", 
+        "error": str(exc),
+        "hint": "Check backend console logs for details. Likely missing environment variables."
+    }
 
 if __name__ == "__main__":
     import uvicorn
