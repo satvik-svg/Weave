@@ -84,12 +84,6 @@ export default function Navbar() {
                 >
                   <span>Sign In</span>
                 </Link>
-                <Link
-                  href="/auth?mode=signup"
-                  className="hidden sm:flex items-center space-x-2 px-5 py-2.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-md hover:shadow-lg"
-                >
-                  <span className="font-medium text-sm">Join Us</span>
-                </Link>
               </>
             ) : !isLoading && user ? (
               <>
@@ -220,13 +214,6 @@ export default function Navbar() {
                     className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border border-slate-200 text-slate-700"
                   >
                     <span className="font-medium">Sign In</span>
-                  </Link>
-                  <Link
-                    href="/auth?mode=signup"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-slate-900 text-white"
-                  >
-                    <span className="font-medium">Join Us</span>
                   </Link>
                 </>
               ) : !isLoading && user ? (
