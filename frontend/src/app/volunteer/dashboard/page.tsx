@@ -8,6 +8,9 @@ import Footer from '@/components/Footer'
 import VolunteerTaskList from '@/components/VolunteerTaskList'
 import { Users, Calendar, Award, TrendingUp, Sparkles, MapPin, Clock } from 'lucide-react'
 
+import { motion } from 'framer-motion'
+import CountUp from 'react-countup'
+
 export default function VolunteerDashboard() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
@@ -49,7 +52,11 @@ export default function VolunteerDashboard() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               <div className="inline-flex items-center space-x-2 bg-slate-800/50 border border-slate-700 text-slate-300 px-4 py-1.5 rounded-full text-sm font-medium mb-6 backdrop-blur-sm">
                 <Sparkles size={16} className="text-emerald-500" />
                 <span>Volunteer Dashboard</span>
@@ -58,17 +65,24 @@ export default function VolunteerDashboard() {
                 Welcome back, <span className="text-emerald-400">{profile.name}!</span>
               </h1>
               <p className="text-slate-400 text-lg">Thank you for making a difference in your community.</p>
-            </div>
+            </motion.div>
 
-            <div className="flex items-center gap-3 bg-slate-800/50 backdrop-blur rounded-2xl p-4 border border-slate-700">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="flex items-center gap-3 bg-slate-800/50 backdrop-blur rounded-2xl p-4 border border-slate-700"
+            >
               <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
                 <Award size={24} />
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">{Math.round(profile.reliability_score * 100)}%</div>
+                <div className="text-2xl font-bold text-white">
+                  <CountUp end={Math.round(profile.reliability_score * 100)} duration={2} suffix="%" />
+                </div>
                 <div className="text-slate-400 text-xs font-medium uppercase tracking-wider">Reliability Score</div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -76,40 +90,66 @@ export default function VolunteerDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-16 relative z-20">
         {/* Stats Grid */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300"
+          >
             <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
               <Users size={28} />
             </div>
             <div>
-              <div className="text-3xl font-bold text-slate-900">0</div>
+              <div className="text-3xl font-bold text-slate-900">
+                <CountUp end={0} duration={2} />
+              </div>
               <div className="text-slate-500 font-medium">Active Tasks</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300"
+          >
             <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
               <Calendar size={28} />
             </div>
             <div>
-              <div className="text-3xl font-bold text-slate-900">0</div>
+              <div className="text-3xl font-bold text-slate-900">
+                <CountUp end={0} duration={2} />
+              </div>
               <div className="text-slate-500 font-medium">Completed Tasks</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300"
+          >
             <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
               <TrendingUp size={28} />
             </div>
             <div>
-              <div className="text-3xl font-bold text-slate-900">0h</div>
+              <div className="text-3xl font-bold text-slate-900">
+                <CountUp end={0} duration={2} suffix="h" />
+              </div>
               <div className="text-slate-500 font-medium">Hours Contributed</div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content - Tasks */}
-          <div className="lg:col-span-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="lg:col-span-2"
+          >
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
               <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                 <Sparkles className="text-emerald-500" size={20} />
@@ -117,10 +157,15 @@ export default function VolunteerDashboard() {
               </h2>
               <VolunteerTaskList />
             </div>
-          </div>
+          </motion.div>
 
           {/* Sidebar - Profile Info */}
-          <div className="lg:col-span-1 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+            className="lg:col-span-1 space-y-6"
+          >
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h2 className="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Profile Details</h2>
 
@@ -158,11 +203,11 @@ export default function VolunteerDashboard() {
                 Find Opportunities
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       <Footer />
-    </div>
+    </div >
   )
 }

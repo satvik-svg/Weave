@@ -29,12 +29,12 @@ if (!hasValidConfig && typeof window !== 'undefined') {
 }
 
 // Create client with proper fallback
-export const supabase = hasValidConfig 
+export const supabase = hasValidConfig
   ? createClient(supabaseUrl, supabaseAnonKey)
   : createClient(
-      'https://example.supabase.co', 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4YW1wbGUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzY1ODg4NCwiZXhwIjoxOTU5MjM0ODg0fQ.fake'
-    )
+    'https://example.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4YW1wbGUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzY1ODg4NCwiZXhwIjoxOTU5MjM0ODg0fQ.fake'
+  )
 
 export const isSupabaseConfigured = hasValidConfig
 

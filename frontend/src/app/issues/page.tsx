@@ -7,6 +7,7 @@ import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { MapPin, Clock, Search, AlertCircle, Filter, ArrowRight, TrendingUp, Leaf, Shield, Users, Building, Flag } from 'lucide-react'
 import { db } from '@/lib/database'
+import { motion } from 'framer-motion'
 
 interface Issue {
   id: string
@@ -217,81 +218,101 @@ export default function IssuesPage() {
             </div>
 
             {/* Issues Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <motion.div
+              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1
+                  }
+                }
+              }}
+            >
               {filteredIssues.map((issue: Issue) => {
                 const category = categoryConfig[issue.category] || categoryConfig.civic
                 const status = statusConfig[issue.status] || statusConfig.pending
                 const Icon = category.icon;
 
                 return (
-                  <Link
+                  <motion.div
                     key={issue.id}
-                    href={`/issues/${issue.id}`}
-                    className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:shadow-xl hover:border-emerald-200 transition-all duration-300 flex flex-col"
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      show: { opacity: 1, y: 0 }
+                    }}
                   >
-                    {/* Category Header */}
-                    <div className={`${category.bg} ${category.border} border-b px-6 py-4`}>
-                      <div className="flex items-center justify-between">
-                        <span className={`flex items-center gap-2 text-sm font-bold ${category.text}`}>
-                          <Icon size={16} />
-                          <span className="capitalize">{issue.category}</span>
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${status.dot}`}></span>
-                          <span className={`text-xs font-bold ${status.text} uppercase tracking-wider`}>
-                            {issue.status.replace('_', ' ')}
+                    <Link
+                      href={`/issues/${issue.id}`}
+                      className="group bg-white rounded-3xl border border-slate-200 overflow-hidden hover:shadow-xl hover:border-emerald-200 transition-all duration-300 flex flex-col h-full hover:-translate-y-1"
+                    >
+                      {/* Category Header */}
+                      <div className={`${category.bg} ${category.border} border-b px-6 py-4`}>
+                        <div className="flex items-center justify-between">
+                          <span className={`flex items-center gap-2 text-sm font-bold ${category.text}`}>
+                            <Icon size={16} />
+                            <span className="capitalize">{issue.category}</span>
                           </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${status.dot}`}></span>
+                            <span className={`text-xs font-bold ${status.text} uppercase tracking-wider`}>
+                              {issue.status.replace('_', ' ')}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Content */}
-                    <div className="p-6 flex-grow flex flex-col">
-                      <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-emerald-600 transition-colors leading-snug">
-                        {issue.title}
-                      </h3>
-                      <p className="text-slate-600 text-sm mb-6 line-clamp-3 leading-relaxed">{issue.description}</p>
+                      {/* Content */}
+                      <div className="p-6 flex-grow flex flex-col">
+                        <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-emerald-600 transition-colors leading-snug">
+                          {issue.title}
+                        </h3>
+                        <p className="text-slate-600 text-sm mb-6 line-clamp-3 leading-relaxed">{issue.description}</p>
 
-                      <div className="mt-auto">
-                        {/* Meta */}
-                        <div className="space-y-3 text-sm text-slate-500 mb-6">
-                          <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg">
-                            <MapPin size={14} className="text-slate-400" />
-                            <span className="truncate">{issue.location?.address || 'Location not specified'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 px-1">
-                            <Clock size={14} className="text-slate-400" />
-                            <span>{new Date(issue.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                          </div>
-                        </div>
-
-                        {/* Priority Indicator */}
-                        <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Priority</span>
-                            <div className="flex gap-1" title={`Priority Level: ${issue.priority}`}>
-                              {[1, 2, 3].map((level) => (
-                                <div
-                                  key={level}
-                                  className={`w-2 h-2 rounded-full ${issue.priority >= level
-                                      ? issue.priority >= 3 ? 'bg-rose-400' : issue.priority >= 2 ? 'bg-amber-400' : 'bg-emerald-400'
-                                      : 'bg-slate-200'
-                                    }`}
-                                />
-                              ))}
+                        <div className="mt-auto">
+                          {/* Meta */}
+                          <div className="space-y-3 text-sm text-slate-500 mb-6">
+                            <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg">
+                              <MapPin size={14} className="text-slate-400" />
+                              <span className="truncate">{issue.location?.address || 'Location not specified'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 px-1">
+                              <Clock size={14} className="text-slate-400" />
+                              <span>{new Date(issue.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                             </div>
                           </div>
-                          <span className="text-emerald-600 text-sm font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                            Details
-                            <ArrowRight size={14} />
-                          </span>
+
+                          {/* Priority Indicator */}
+                          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Priority</span>
+                              <div className="flex gap-1" title={`Priority Level: ${issue.priority}`}>
+                                {[1, 2, 3].map((level) => (
+                                  <div
+                                    key={level}
+                                    className={`w-2 h-2 rounded-full ${issue.priority >= level
+                                      ? issue.priority >= 3 ? 'bg-rose-400' : issue.priority >= 2 ? 'bg-amber-400' : 'bg-emerald-400'
+                                      : 'bg-slate-200'
+                                      }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <span className="text-emerald-600 text-sm font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                              Details
+                              <ArrowRight size={14} />
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  </motion.div>
                 )
               })}
-            </div>
+            </motion.div>
 
             {/* Empty State */}
             {filteredIssues.length === 0 && (

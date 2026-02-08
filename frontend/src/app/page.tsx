@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { issuesApi, plansApi, volunteersApi } from '@/lib/api'
 import { motion } from 'framer-motion'
 import FeaturedCard from '@/components/FeaturedCard'
+import CountUp from 'react-countup'
 
 export default function Home() {
   // Fetch real stats
@@ -205,10 +206,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section with Glassmorphism */}
       <section className="py-12 -mt-10 relative z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-slate-900 rounded-[2.5rem] p-8 lg:p-12 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="bg-slate-900 rounded-[2.5rem] p-8 lg:p-12 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500"
+          >
             <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] transform translate-x-1/3 -translate-y-1/3 group-hover:bg-emerald-500/30 transition-colors"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px] transform -translate-x-1/3 translate-y-1/3 group-hover:bg-blue-500/30 transition-colors"></div>
 
@@ -220,22 +227,30 @@ export default function Home() {
                 { label: 'Completed', value: stats.completed, icon: CheckCircle },
               ].map((stat, i) => (
                 <div key={i} className="text-center lg:text-left">
-                  <div className="inline-flex p-3 bg-slate-800 rounded-2xl text-emerald-400 mb-4 ring-1 ring-slate-700/50">
+                  <div className="inline-flex p-3 bg-slate-800 rounded-2xl text-emerald-400 mb-4 ring-1 ring-slate-700/50 hover:bg-slate-700 transition-colors">
                     <stat.icon size={24} />
                   </div>
-                  <div className="text-4xl lg:text-5xl font-black text-white mb-2 tracking-tight">{stat.value}</div>
+                  <div className="text-4xl lg:text-5xl font-black text-white mb-2 tracking-tight">
+                    <CountUp end={stat.value} duration={2.5} separator="," />
+                  </div>
                   <div className="text-slate-400 font-medium">{stat.label}</div>
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Dynamic Activity Feed Section */}
       <section className="py-32 bg-slate-50/50 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16"
+          >
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
                 Live Community Actions
@@ -247,21 +262,22 @@ export default function Home() {
             </div>
             <Link
               href="/issues"
-              className="group flex items-center space-x-2 text-emerald-600 font-bold hover:text-emerald-700 bg-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all"
+              className="group flex items-center space-x-2 text-emerald-600 font-bold hover:text-emerald-700 bg-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all scale-100 hover:scale-105 active:scale-95"
             >
               <span>View All Projects</span>
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredPlans.map((plan: any) => (
+            {featuredPlans.map((plan: any, idx: number) => (
               <motion.div
                 key={plan.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                whileHover={{ y: -5 }}
               >
                 <FeaturedCard plan={plan} />
               </motion.div>
@@ -282,13 +298,18 @@ export default function Home() {
       {/* Process Section */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
             <h2 className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-3">One Unified Platform</h2>
             <h3 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6">From Problem to Solution</h3>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
               Our AI agents coordinate the complex logistics so you can focus on making a difference.
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-4 gap-8 relative">
             <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-100 via-emerald-200 to-emerald-100 -z-10"></div>
