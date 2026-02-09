@@ -110,7 +110,7 @@ async def analyze_issue(issue_id: str) -> dict:
         update_data = {
             "category": analysis.get("category", issue["category"]),
             "priority": analysis.get("priority", 0.5),
-            "status": "planning" if analysis.get("is_valid", True) else "rejected",
+            "status": "planning" if analysis.get("is_valid", True) else "pending",
             "metadata": {
                 "discovery_analysis": analysis,
                 "analyzed_at": datetime.utcnow().isoformat()

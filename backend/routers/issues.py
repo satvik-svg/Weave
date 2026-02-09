@@ -19,8 +19,11 @@ async def process_issue_with_agents(issue_id: str):
         discovery_result = await analyze_issue(issue_id)
         print(f"✅ Discovery Agent completed: {discovery_result.get('success', False)}")
         
-        # Phase 3: Planning Agent (only if discovery succeeded)
-        if discovery_result.get('success'):
+        # Phase 3: Planning Agent (only if discovery succeeded AND issue is valid)
+        discovery_analysis = discovery_result.get('analysis', {})
+        is_valid = discovery_analysis.get('is_valid', True)
+        
+        if discovery_result.get('success') and is_valid:
             print(f"📋 Starting Planning Agent for issue {issue_id}")
             planning_result = await create_action_plan(issue_id)
             print(f"✅ Planning Agent completed: {planning_result.get('success', False)}")
@@ -28,7 +31,14 @@ async def process_issue_with_agents(issue_id: str):
             # Phase 4: Matching Agent (if planning succeeded)
             if planning_result.get('success'):
                 from agents.matching_agent import match_volunteers_to_tasks
-                action_plan_id = planning_result.get('action_plan', {}).get('id')
+                
+                # Extract action_plan_id handling both new and existing plan formats
+                action_plan_id = None
+                if 'action_plan' in planning_result:
+                    action_plan_id = planning_result['action_plan'].get('id')
+                elif 'action_plan_id' in planning_result:
+                     action_plan_id = planning_result['action_plan_id']
+                
                 if action_plan_id:
                     print(f"👥 Starting Matching Agent for action plan {action_plan_id}")
                     matching_result = await match_volunteers_to_tasks(action_plan_id)
@@ -36,6 +46,8 @@ async def process_issue_with_agents(issue_id: str):
                     if matching_result.get('success'):
                         summary = matching_result.get('summary', {})
                         print(f"   📊 Assigned {summary.get('total_assignments_made', 0)} volunteers to {summary.get('tasks_fully_assigned', 0)}/{summary.get('total_tasks', 0)} tasks")
+                else:
+                    print("⚠️ Could not find action_plan_id to trigger matching")
         
     except Exception as e:
         print(f"❌ Agent processing failed: {e}")

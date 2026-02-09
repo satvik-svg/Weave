@@ -150,8 +150,8 @@ async def match_volunteers_to_tasks(action_plan_id: str) -> dict:
             v_id = a['volunteer_id']
             assignment_counts[v_id] = assignment_counts.get(v_id, 0) + 1
             
-        # Filter strictly busy volunteers (more than 3 active tasks)
-        MAX_CONCURRENT_TASKS = 3
+        # Filter strictly busy volunteers (more than MAX_CONCURRENT_TASKS active tasks)
+        MAX_CONCURRENT_TASKS = 10
         busy_volunteer_ids = set(v_id for v_id, count in assignment_counts.items() if count >= MAX_CONCURRENT_TASKS)
         
         # Filter to available volunteers (less than MAX_CONCURRENT_TASKS assignments)
@@ -159,8 +159,19 @@ async def match_volunteers_to_tasks(action_plan_id: str) -> dict:
         
         print(f"📊 Volunteers: {len(all_volunteers)} total, {len(busy_volunteer_ids)} busy, {len(available_volunteers)} available")
         
+        # Fallback: If no volunteers are "available" (all hit the limit), pick the least busy ones
         if not available_volunteers:
-            return {"error": f"No available volunteers. All {len(all_volunteers)} volunteers are currently assigned to active tasks."}
+            print("⚠️ All volunteers are busy! Falling back to least busy volunteers.")
+            # Sort all volunteers by their current assignment count (ascending)
+            # Volunteers with 0 assignments won't be in assignment_counts, so get(v_id, 0) handles them
+            available_volunteers = sorted(all_volunteers, key=lambda v: assignment_counts.get(v['id'], 0))
+            
+            # If we really just want to proceed, we use everyone, but prioritized by least busy
+            # The sorting above achieves that.
+            
+            # Log this fallback event (optional but good for debugging)
+            # We don't return error anymore, we proceed with these "busy" volunteers
+
         
         assignments = []
         assignment_summary = {

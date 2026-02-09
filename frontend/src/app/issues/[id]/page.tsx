@@ -87,6 +87,7 @@ export default function IssueDetailPage() {
   const status = statusConfig[issue.status] || statusConfig.pending;
   const StatusIcon = status.icon;
   const hasDiscovery = Object.keys(discoveryAnalysis).length > 0;
+  const isValid = issue.metadata?.discovery_analysis?.is_valid !== false;
 
   return (
     <div className='min-h-screen bg-slate-50 selection:bg-emerald-100 selection:text-emerald-900'>
@@ -391,7 +392,26 @@ export default function IssueDetailPage() {
         )}
 
         {/* Loading States */}
-        {!plansLoading && !actionPlan && !hasDiscovery && issue.status === 'pending' && (
+        {/* Loading States & Invalid State */}
+        {!isValid && (
+          <div className='bg-white rounded-2xl p-12 text-center shadow-lg border border-rose-100'>
+            <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Shield className="w-10 h-10 text-rose-600" />
+            </div>
+            <h3 className='text-2xl font-bold text-slate-900 mb-3'>Issue Flagged as Invalid</h3>
+            <p className='text-slate-600 max-w-lg mx-auto mb-6'>
+              Our AI agents have analyzed this submission and determined it does not meet the criteria for a community issue.
+            </p>
+            {discoveryAnalysis.reasoning && (
+              <div className='max-w-md mx-auto bg-rose-50 text-rose-800 p-4 rounded-xl text-sm border border-rose-100'>
+                <p className="font-bold mb-1">Reasoning:</p>
+                {discoveryAnalysis.reasoning}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!plansLoading && !actionPlan && !hasDiscovery && issue.status === 'pending' && isValid && (
           <div className='bg-white rounded-2xl p-12 text-center shadow-lg border border-purple-100'>
             <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Loader2 className="w-10 h-10 text-purple-600 animate-spin" />
@@ -401,7 +421,7 @@ export default function IssueDetailPage() {
           </div>
         )}
 
-        {!plansLoading && !actionPlan && hasDiscovery && (
+        {!plansLoading && !actionPlan && hasDiscovery && isValid && (
           <div className='bg-white rounded-2xl p-12 text-center shadow-lg border border-blue-100'>
             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
