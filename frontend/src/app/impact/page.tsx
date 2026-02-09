@@ -1,10 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { TrendingUp, CheckCircle, Award, AlertCircle, Shield, MapPin, Brain, Activity } from 'lucide-react'
+import VerificationDemoModal from '@/components/VerificationDemoModal'
+import VerificationFeed from '@/components/VerificationFeed'
+import { CheckCircle, AlertCircle, Shield, MapPin, Brain, Activity, Users } from 'lucide-react'
 
 export default function ImpactPage() {
+  const [demoOpen, setDemoOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-slate-50 selection:bg-emerald-100 selection:text-emerald-900">
       <Navbar />
@@ -23,39 +28,25 @@ export default function ImpactPage() {
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
             Impact <span className="text-emerald-400">Verification</span>
           </h1>
-          <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto">
+          <p className="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto mb-10">
             We use advanced AI and community consensus to verify and measure the real-world outcomes of every initiative.
           </p>
+
+          <button
+            onClick={() => setDemoOpen(true)}
+            className="inline-flex items-center space-x-2 bg-emerald-600 text-white px-8 py-3.5 rounded-full font-semibold shadow-lg shadow-emerald-500/30 hover:bg-emerald-500 hover:scale-105 transition-all duration-300 group"
+          >
+            <span>See How It Works</span>
+            <Activity size={18} className="group-hover:rotate-12 transition-transform" />
+          </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-16 relative z-20">
 
-        {/* Stats Preview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <TrendingUp size={32} />
-            </div>
-            <div className="text-4xl font-bold text-slate-900 mb-2">0</div>
-            <div className="text-slate-500 font-medium uppercase tracking-wider text-sm">Verified Projects</div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Award size={32} />
-            </div>
-            <div className="text-4xl font-bold text-slate-900 mb-2">0</div>
-            <div className="text-slate-500 font-medium uppercase tracking-wider text-sm">Impact Reports</div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-8 text-center hover:-translate-y-1 transition-transform duration-300">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} />
-            </div>
-            <div className="text-4xl font-bold text-slate-900 mb-2">0%</div>
-            <div className="text-slate-500 font-medium uppercase tracking-wider text-sm">Verification Rate</div>
-          </div>
+        {/* Live Verification Feed */}
+        <div className="mb-20">
+          <VerificationFeed />
         </div>
 
         {/* Coming Soon Section */}
@@ -145,28 +136,10 @@ export default function ImpactPage() {
         </div>
       </div>
       <Footer />
+
+      <VerificationDemoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   )
 }
 
-function Users(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  )
-}
+
